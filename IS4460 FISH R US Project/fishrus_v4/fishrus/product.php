@@ -9,15 +9,16 @@
     // Getting the product name from URL
     if(isset($_GET['product'])){
         $product = sanitizeString($_GET['product']);
+        $product = addslashes($product); // rod's food to rod\'s food
     }else{
-        $product = "ERROR ERROR ERROR";
+        $product = "ERROR";
     }
 
     // Setting variables for display in product.php
     // query for product table
     $query = "SELECT * FROM product WHERE Product_Name='$product'";
     $result = $conn->query($query);
-    if (!$result) die ("Database access failed in product.php");
+    if (!$result) die ("Database access failed in product.php 1");
 
     $row = $result->fetch_array(MYSQLI_ASSOC);
 
@@ -28,7 +29,7 @@
     // query for inventory table
     $query = "SELECT * FROM inventory WHERE Product_ID='$product_id'";
     $result = $conn->query($query);
-    if (!$result) die ("Database access failed in product.php");
+    if (!$result) die ("Database access failed in product.php 2");
 
     $rows = $result->num_rows;
 
@@ -44,13 +45,13 @@
     }
 
     if($quantity == 0){
-        $sales_message = "";
+        $stock_message = "OUT OF STOCK";
     }
 
     // query for discount table
     $query = "SELECT * FROM discount WHERE Product_ID='$product_id'";
     $result = $conn->query($query);
-    if (!$result) die ("Database access failed in product.php");
+    if (!$result) die ("Database access failed in product.php 3");
 
     $rows = $result->num_rows;
 
@@ -72,7 +73,7 @@
     // query for genus table
     $query = "SELECT * FROM genus WHERE Product_ID='$product_id'";
     $result = $conn->query($query);
-    if (!$result) die ("Database access failed in product.php");
+    if (!$result) die ("Database access failed in product.php 4");
 
     $rows = $result->num_rows;
 
@@ -85,52 +86,11 @@
         $genus = '('.$genus.')';
     }
 
-    // create image relative path
-    $image_relative_path = 'product-images\\'; //.str_replace(' ', '-', $product); //image relative path
-    $image_name = str_replace(' ', '-', $product);
+    $image_relative_path = createImagePath($product, $product_category);
 
-    if($product_category == "Fish")
-    {
-        $image_relative_path = $image_relative_path.'marine-fish\\';
-    }
-    else if($product_category == "Invert")
-    {
-        $image_relative_path = $image_relative_path.'marine-inverts\\';
-    }
-    else if($product_category == "Food")
-    {
-        $image_relative_path = $image_relative_path.'frozen-food\\';
-    }
-    else if($product_category == "Plant")
-    {
-        $image_relative_path = $image_relative_path.'fresh-water-plants\\';
-    }
-    else if($product_category == "Aquascaping")
-    {
-        $image_relative_path = $image_relative_path.'aquascaping\\';
-    }
-    else if($product_category == "Aquarium")
-    {
-        $image_relative_path = $image_relative_path.'aquarium\\';
-    }
-    else
-    {
-        $image_relative_path = 'product-images\\';
-    }
+    $product = stripslashes($product); //rod\'s food back to rod's food
 
-    if (file_exists($image_relative_path.$image_name.'.png')) 
-    {   
-        $image_relative_path = $image_relative_path.$image_name.'.png';
-    } 
-    else if (file_exists($image_relative_path.$image_name.'.jpg')) 
-    {
-        $image_relative_path = $image_relative_path.$image_name.'.jpg';
-    } 
-    else {
-        $image_relative_path = 'product-images\\';
-    }
-
-    echo <<<_END
+echo <<<_END
     <html>
         <head>
             <title>FISH R US</title>
@@ -240,7 +200,7 @@
                 <div>
                     <form method="GET" action="product-list.php" name="site-search" style="display:inline">
                         <div> 
-                            <input type="text" size="50"> <!-- size of search bar -->
+                            <input type="text" size="50" name="search_term"> <!-- size of search bar -->
                             <input type="submit" value="Go">
                         </div>
                     </form>
@@ -280,7 +240,7 @@
                     Starting at <span style="font-style:bold">$$product_price</span><br>
                     <span style="font-style:italic">$stock_message</span>
                     <br><br>
-                    <form method="GET" action="product.php?product=$product" name="add-to-cart" style="display:inline">
+                    <form method="GET" action="" name="add-to-cart" style="display:inline">
                         Quantity 
                         <select name="quantity" size="1">
 _END;
@@ -289,11 +249,11 @@ _END;
                                     <option value="$i">$i</option>
                                 _END;
                             }
-    echo <<<_END
+echo <<<_END
                         </select>
                         <br><br><br>
                         <div> 
-                            <input type="submit" value="Add to Cart">
+                            <input type="button" value="Add to Cart" onclick="alertAddedToCart()">
                         </div>
                         <div> 
                             <input type="hidden" name="product" value="$product">
@@ -303,22 +263,73 @@ _END;
                 </td>
             </tr>
             </table>
-            <table>
-                <tr>
-                    <td>
-_END;
-                // Confirming product added to cart
-                if(isset($_GET['submitted'])){
-                    echo <<<_END
-                        <br><br><br><span style="font-style:italic">Your product has been added to the shopping cart.</span>
-                    _END;
-                } 
-echo <<<_END
-                    </td>
-                </tr>
-            </table>
+
+            <script>
+            function alertAddedToCart() {
+                var r = confirm("Your product has been added to your shopping cart.");
+                if (r == true) {
+                    <!-- add to cart -->
+                } else {
+                    <!-- don't add to cart -->
+                }
+            }
+            </script>
+        
         </body>
     </html>
 _END;
+
+function createImagePath($product_name, $product_category){
+    $image_relative_path = 'product-images\\'; //image relative path
+    $product_name = stripslashes($product_name); //rod\'s food to rod's food
+    $image_name = str_replace(' ', '-', $product_name);
+
+    if($product_category == "Fish")
+    {
+        $image_relative_path = $image_relative_path.'marine-fish\\';
+    }
+    else if($product_category == "Invert")
+    {
+        $image_relative_path = $image_relative_path.'marine-inverts\\';
+    }
+    else if($product_category == "Food")
+    {
+        $image_relative_path = $image_relative_path.'frozen-food\\';
+    }
+    else if($product_category == "Plant")
+    {
+        $image_relative_path = $image_relative_path.'fresh-water-plants\\';
+    }
+    else if($product_category == "Aquascaping")
+    {
+        $image_relative_path = $image_relative_path.'aquascaping\\';
+    }
+    else if($product_category == "Aquarium")
+    {
+        $image_relative_path = $image_relative_path.'aquariums\\';
+    }
+    else
+    {
+        $image_relative_path = 'product-images\\';
+    }
+
+    if (file_exists($image_relative_path.$image_name.'.png')) 
+    {   
+        $image_relative_path = $image_relative_path.$image_name.'.png';
+    } 
+    else if (file_exists($image_relative_path.$image_name.'.jpg')) 
+    {
+        $image_relative_path = $image_relative_path.$image_name.'.jpg';
+    } 
+    else {
+        $image_relative_path = 'product-images\\';
+    }
+
+    return $image_relative_path;
+}
+
+
 ?>
+
+
 

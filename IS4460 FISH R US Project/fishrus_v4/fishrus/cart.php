@@ -111,7 +111,7 @@
             <div>
                 <form method="GET" action="product-list.php" name="site-search" style="display:inline">
                     <div> 
-                        <input type="text" size="50"> <!-- size of search bar -->
+                        <input type="text" size="50" name="search_term"> <!-- size of search bar -->
                         <input type="submit" value="Go">
                     </div>
                 </form>

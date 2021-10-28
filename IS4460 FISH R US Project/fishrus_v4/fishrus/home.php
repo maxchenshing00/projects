@@ -1,6 +1,5 @@
-<html>
-    
-<head>
+<html> 
+    <head>
         <title>FISH R US</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
@@ -84,10 +83,6 @@
             table {
                 width:100%;
                 align:left;
-
-                /*vertical gap between rows*/
-                border-collapse: separate;
-                border-spacing: 0 1em;
             }
 
             td {
@@ -112,7 +107,7 @@
             <div>
                 <form method="GET" action="product-list.php" name="site-search" style="display:inline">
                     <div> 
-                        <input type="text" size="50"> <!-- size of search bar -->
+                        <input type="text" size="50" name="search_term"> <!-- size of search bar -->
                         <input type="submit" value="Go">
                     </div>
                 </form>
@@ -135,78 +130,105 @@
             </div>
         </header>
 
-    <!-- List of Products -->
+    <!-- "Trending Products" Section -->
     <table>
         <tr>
-            <h3>Results for "Goldfish"</h3>
+            <h1>Trending Products!</h1>
         </tr>
         <tr>
             <td>
-                <a href="product.php?product=Fantail Goldfish Red"><img src="product-images\marine-fish\Fantail-Goldfish-Red.jpg" height="150" width="150"/></a>
+                <a href="product.php?product=Amazon Sword Plant"><img src="product-images\fresh-water-plants\Amazon-Sword-Plant.jpg" height="250" width="250"/></a>
             </td>
             <td>
-                <a href="product.php?product=Fantail Goldfish Calico"><img src="product-images\marine-fish\Fantail-Goldfish-Calico.jpg" height="150" width="150"/></a>
+                <a href="product.php?product=Blue Tang"><img src="product-images\marine-fish\Blue-Tang.jpg" height="250" width="250"/></a>
             </td>
             <td>
-                <a href="product.php?product=Calico Ryukin Goldfish"><img src="product-images\marine-fish\Calico-Ryukin-Goldfish.jpg" height="150" width="150"/></a>
-            </td>
-            <td>
-                <a href="product.php?product=Red Cap Oranda Goldfish"><img src="product-images\marine-fish\Red-Cap-Oranda-Goldfish.jpg" height="150" width="150"/></a>
+                <a href="product.php?product=Piscine Energetics PE Calanus Frozen Fish Food"><img src="product-images\frozen-food\Piscine-Energetics-PE-Calanus-Frozen-Fish-Food.jpg" height="250" width="250"/></a>
             </td>
         </tr>
 
         <tr>
-            <td class="table-item">
-                <a href="product.php?product=Fantail Goldfish Red">Fantail Goldfish, Red</a><br>
-                (Carassius auratus)<br><br>
-                Starting at <span style="font-style:bold">$3.99</span><br>
-                <span style="font-style:italic">IN STOCK</span>
-            </td>
             <td class="table-item">
                 <span style="background-color:yellow;font-style:bold">ON SALE!<br></span>
-                <a href="product.php?product=Fantail Goldfish Calico">Fantail Goldfish, Calico</a><br>
-                (Carassius auratus)<br><br>
-                Starting at <span style="font-style:bold">$4.99</span><br>
-                <span style="font-style:italic">IN STOCK</span>
+                <a href="product.php?product=Amazon Sword Plant">Amazon Sword Plant</a><br>
+                (Echinodorus amazonicus)<br><br>
+                Starting at <span style="font-style:bold">$5.59</span>
             </td>
             <td class="table-item">
-                <a href="product.php?product=Calico Ryukin Goldfish">Calico Ryukin Goldfish</a><br>
-                (Carassius auratus)<br><br>
-                Starting at <span style="font-style:bold">$31.99</span><br>
-                <span style="font-style:italic">IN STOCK</span>
+                <br>
+                <a href="product.php?product=Blue Tang">Blue Tang</a><br>
+                (Paracanthurus hepatus)<br><br>
+                Starting at <span style="font-style:bold">$84.99</span>
             </td>
             <td class="table-item">
-                <a href="product.php?product=Red Cap Oranda Goldfish">Red Cap Oranda Goldfish</a><br>
-                (Carassius auratus)<br><br>
-                Starting at <span style="font-style:bold">$12.99</span><br>
-                <span style="font-style:italic">IN STOCK</span>
+                <br>
+                <a href="product.php?product=Piscine Energetics PE Calanus Frozen Fish Food">Piscine Energetics PE Calanus Frozen Fish Food</a><br><br>
+                Starting at <span style="font-style:bold">$32.99</span>
             </td>
         </tr>
+    </table>
 
+    <!-- "On Sale!" Section -->
+    <table>
+        <tr>
+            <h1>On Sale!</h1>
+        </tr>
         <tr>
             <td>
-                <a href="product.php?product=Oranda Goldfish Assorted"><img src="product-images\marine-fish\Oranda-Goldfish-Assorted.jpg" height="150" width="150"/></a>
+                <a href="product-list.php?product-list=On-sale"><img src="img\on-sale.png"/></a>
+            </td>
+        </tr>
+    </table>
+
+    <!-- "FISH R US Picks!" Section -->
+    <table>
+        <tr>
+            <h1>FISH R US Picks!</h1>
+        </tr>
+        <tr>
+            <td>
+                <a href="product-list.php?product-list=Fish"><img src="product-images\marine-fish\Blue-Tang.jpg" height="150" width="150"/></a>
             </td>
             <td>
-                <a href="product.php?product=Black Moor Goldfish"><img src="product-images\marine-fish\Black-Moor-Goldfish.jpg" height="150" width="150"/></a>
+                <a href="product-list.php?product-list=Food"><img src="product-images\frozen-food\Piscine-Energetics-PE-Calanus-Frozen-Fish-Food.jpg" height="150" width="150"/></a>
+            </td>
+            <td>
+                <a href="product-list.php?product-list=Plant"><img src="product-images\fresh-water-plants\Amazon-Sword-Plant.jpg" height="150" width="150"/></a>
+            </td>
+            <td>
+                <a href="product-list.php?product-list=Invert"><img src="product-images\marine-inverts\derasa-clam-striped-with-blue-rim.PNG" height="150" width="150"/></a>
             </td>
         </tr>
-
         <tr>
             <td class="table-item">
-                <a href="product.php?product=Oranda Goldfish Assorted">Orand Goldfish Assorted</a><br>
-                (Carassius auratus)<br><br>
-                Starting at <span style="font-style:bold">$8.49</span><br>
-                <span style="font-style:italic">IN STOCK</span>
+                <br><a href="product-list.php?product-list=Fish">Marine Fish></a><br><br>
             </td>
             <td class="table-item">
-                <a href="product.php?product=Black Moor Goldfish">Black Moor Goldfish</a><br>
-                (Carassius auratus)<br><br>
-                Starting at <span style="font-style:bold">$8.99</span><br>
-                <span style="font-style:italic">IN STOCK</span>
+                <br><a href="product-list.php?product-list=Food">Frozen Food></a><br><br>
+            </td>
+            <td class="table-item">
+                <br><a href="product-list.php?product-list=Plant">Fresh Water Plants></a><br><br>
+            </td>
+            <td class="table-item">
+                <br><a href="product-list.php?product-list=Invert">Marine Inverts></a><br><br>
             </td>
         </tr>
-
+        <tr>
+            <td>
+                <a href="product-list.php?product-list=Aquarium"><img src="product-images\aquariums\Live-Aquaria-Beginner-Shrimp-Aquarium-Kit-Orbi-Black.PNG" height="150" width="150"/></a>
+            </td>
+            <td>
+                <a href="product-list.php?product-list=Aquascaping"><img src="product-images\aquascaping\malaysian-driftwood.PNG" height="150" width="150"/></a>
+            </td>
+        </tr>
+        <tr>
+            <td class="table-item">
+                <br><a href="product-list.php?product-list=Aquarium">Aquariums></a><br><br>
+            </td>
+            <td class="table-item">
+                <br><a href="product-list.php?product-list=Aquascaping">Aquascaping></a><br><br>
+            </td>
+        </tr>
     </table>
 
   </body>
