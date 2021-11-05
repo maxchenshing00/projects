@@ -248,3 +248,63 @@ INSERT INTO `FishRUS`.`genus` (`Product_ID`,`Genus`) VALUES ('24', 'Myriophyllum
 INSERT INTO `FishRUS`.`product` (`Product_ID`, `Product_Name`, `Product_Price`, `Category`, `Vendor_ID`) VALUES (null, 'Magikarp', '0.01', 'Fish', '1');
 INSERT INTO `FishRUS`.`genus` (`Product_ID`,`Genus`) VALUES ('31', 'Magikarp');
 INSERT INTO `FishRUS`.`inventory` (`Inventory_ID`, `Product_ID`, `Vendor_ID`, `Store_ID`, `Inventory_Date`, `Quantity`) VALUES ('31', '31', '1', '1', '2021-01-01', '10'); 
+
+-- Adding Username and Password to customer and employee table
+ALTER TABLE customer ADD `Username` varchar(100);
+ALTER TABLE customer ADD `Password` varchar(100);
+ALTER TABLE employee ADD `Username` varchar(100);
+ALTER TABLE employee ADD `Password` varchar(100);
+
+UPDATE customer SET `Username` = 'john123', `Password` = 'password' WHERE `Customer_ID` = 1;
+UPDATE employee SET `Username` = 'adam123', `Password` = 'password' WHERE `Emp_ID` = 1;
+UPDATE employee SET `Username` = 'bianca123', `Password` = 'password' WHERE `Emp_ID` = 2;
+
+-- For login.php
+-- Creating 'user' table, creating 'admin' table, dropping 'customer' table, dropping 'employee' table
+CREATE TABLE `user` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT, -- need to change to User_ID, will need to change login.php, login-confirm.php, all display pages
+  `First_Name` varchar(45) NOT NULL,
+  `Last_Name` varchar(45) NOT NULL,
+  `Phone_Number` char(12) DEFAULT NULL,
+  `Email` varchar(60) NOT NULL,
+  `State` char(2) DEFAULT NULL,
+  `City` varchar(45) DEFAULT NULL,
+  `Street` varchar(45) DEFAULT NULL,
+  `ZIP` char(5) DEFAULT NULL,
+  `Username` varchar(45) NOT NULL,
+  `Password` varchar(45) NOT NULL,
+  PRIMARY KEY (`ID`)
+);
+
+CREATE TABLE `admin` (
+  `ID` int(11) NOT NULL AUTO_INCREMENT,
+  `Position` varchar(45) NOT NULL,
+  `Store_ID` int(11) NOT NULL,
+  PRIMARY KEY (`ID`),
+  KEY `Store_ID_idx` (`Store_ID`),
+  CONSTRAINT `fk_admin_ID` FOREIGN KEY (`ID`) REFERENCES `user` (`ID`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  CONSTRAINT `fk_admin_StoreID` FOREIGN KEY (`Store_ID`) REFERENCES `store` (`Store_ID`) ON DELETE NO ACTION ON UPDATE CASCADE
+);
+
+DROP TABLE customer;
+DROP TABLE employee;
+
+INSERT INTO `FishRUS`.`user` (`ID`, `First_Name`, `Last_Name`, `Phone_Number`, `Email`, `State`, `City`, `Street`, `ZIP`, `Username`, `Password`) VALUES ('1', 'John', 'Smith', '111-111-1111', 'john.smith@gmail.com', 'UT', 'Salt Lake City', '123 Main Street', '84112', 'john123', 'pass');
+INSERT INTO `FishRUS`.`user` (`ID`, `First_Name`, `Last_Name`, `Phone_Number`, `Email`, `Username`, `Password`) VALUES ('2', 'Adam', 'Jones', '555-111-1111', 'adam.jones123@gmail.com', 'adam123', 'pass');
+INSERT INTO `FishRUS`.`user` (`ID`, `First_Name`, `Last_Name`, `Phone_Number`, `Email`, `Username`, `Password`) VALUES ('3', 'Bianca', 'Brown', '555-111-1112', 'biancebrown95@gmail.com', 'bianca123', 'pass');
+INSERT INTO `FishRUS`.`admin` (`ID`, `Position`, `Store_ID`) VALUES ('2', 'Manager', '1');
+INSERT INTO `FishRUS`.`admin` (`ID`, `Position`, `Store_ID`) VALUES ('3', 'Sales', '1');
+
+-- For cart.php
+-- Creating cart_items table
+CREATE TABLE `cart_item` (
+  `Cart_Item_ID` int(11) NOT NULL AUTO_INCREMENT,
+  `ID` int(11) NOT NULL,
+  `Product_ID` int(11) NOT NULL,
+  `Quantity` int(11) NOT NULL,
+  PRIMARY KEY (`Cart_Item_ID`),
+  KEY `fk_cartitem_ID_idx` (`ID`),
+  KEY `fk_cartitem_ProductID_idx` (`Product_ID`),
+  CONSTRAINT `fk_cartitem_ID` FOREIGN KEY (`ID`) REFERENCES `user` (`ID`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  CONSTRAINT `fk_cartitem_ProductID` FOREIGN KEY (`Product_ID`) REFERENCES `product` (`Product_ID`) ON DELETE NO ACTION ON UPDATE CASCADE
+);

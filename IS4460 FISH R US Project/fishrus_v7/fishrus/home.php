@@ -1,3 +1,13 @@
+<?php
+require_once "utility/sanitize.php";
+require_once "utility/login-cred.php";
+
+$conn = new mysqli($hn, $un, $pw, $db);
+if ($conn->connect_error) die("Error: Failed to connect to database.");
+
+if (!isset($_SESSION)) { session_start(); }
+?>
+
 <html> 
     <head>
         <title>FISH R US</title>
@@ -7,7 +17,7 @@
             .top-nav {
                 background-color:#3587b8;
                 overflow: hidden;
-                height:48px; 
+                height:46px; 
             }
 
             .top-nav a {
@@ -94,32 +104,52 @@
                 text-align: center;
             }
             /* end of table css */
+
+            /* start of paragraph formatting */
+            p.format {
+                margin-top: 0;
+                margin-bottom: 0;
+                margin-left: 1em;
+                margin-right: 1em;
+                padding: 0px 0px 0px 0px;
+            }
+            /* end of paragraph formatting */
         </style>
     </head>
 
     <body>
-        <!-- nav bar -->
+        <!-- nav bar v3 -->
         <header class="top-nav">
             <div>
-                <a href="home.php">FISH R US</a>
+                <a href="home.php"><p class="format">FISH R US</p></a>
             </div>
 
             <div>
                 <form method="GET" action="product-list.php" name="site-search" style="display:inline">
+                    <p class="format">
                     <div> 
                         <input type="text" size="50" name="search_term"> <!-- size of search bar -->
                         <input type="submit" value="Go">
                     </div>
+                    </p>
                 </form>
             </div>
 
             <div class="dropdown">
-                <button class="dropbtn">Account 
+                <button class="dropbtn"><p class="format">Account</p> 
                     <i class="fa fa-caret-down"></i>
                 </button>
                 <div class="dropdown-content">
-                    <a href="login.php">Sign In</a>
-                    <a href="#">Register</a>
+                    <?php
+                        if(array_key_exists('ID',$_SESSION)){
+                        ?>
+                            <a href="#account details page">Account Details</a>
+                            <a href="#order history page">Order History</a>
+                            <a href="logout.php">Log Out</a>
+                    <?php }else{ ?>
+                            <a href="login.php">Sign In</a>
+                            <a href="register page">Register</a>
+                    <?php } ?>
                 </div>
             </div>
 
@@ -128,6 +158,34 @@
                     <img src="img\cart-icon.png" width="20" height="20">
                 </a>
             </div>
+
+            <?php 
+                $query = "SELECT * FROM admin WHERE `ID` = '$_SESSION[ID]'";
+                $result = $conn->query($query);
+                if (!$result) die ("Error: Database access failed, home.php");
+
+                $rows = $result->num_rows;
+
+                if($rows === 1){
+            ?>
+                <div>
+                    <a href="#admin page"><p class="format">Admin</p></a>
+                </div>
+            <?php
+                }
+            ?>
+
+            <?php 
+                if(array_key_exists('ID',$_SESSION)){
+            ?>
+            <p class="format">
+                <a style="background-color:#3587b8;">
+                Hello, <?php echo "$_SESSION[First_Name]"; ?>
+                </a>
+            </p>
+            <?php
+                }
+            ?>
         </header>
 
     <!-- "Trending Products" Section -->
@@ -233,3 +291,11 @@
 
   </body>
 </html>
+
+<?php 
+// }
+// else{
+//     header("Location: login.php");
+//     exit();
+// } 
+?>

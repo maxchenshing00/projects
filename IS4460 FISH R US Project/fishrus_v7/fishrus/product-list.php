@@ -1,11 +1,15 @@
 <?php
-    require_once "utility/sanitize.php";
-    require_once 'utility/login-cred.php';
+require_once "utility/sanitize.php";
+require_once "utility/login-cred.php";
 
-    // Starting connection with database
-    $conn = new mysqli($hn, $un, $pw, $db);
-    if ($conn->connect_error) die("Error: Failed to connect to database.");
+// Starting connection with database
+$conn = new mysqli($hn, $un, $pw, $db);
+if ($conn->connect_error) die("Error: Failed to connect to database.");
 
+if (!isset($_SESSION)) { session_start(); }
+?>
+
+<?php
     $isSearchTerm = FALSE;
     $isOnSale = FALSE;
     $isCategory = FALSE;
@@ -57,7 +61,7 @@
             LEFT JOIN genus ON genus.Product_ID = product.Product_ID 
             LEFT JOIN discount ON discount.Product_ID = product.Product_ID 
             LEFT JOIN inventory ON inventory.Product_ID = product.Product_ID 
-            WHERE product.Product_Name LIKE '%$product_list%' OR product.Category LIKE '%$product_list%' OR genus.Genus LIKE '%$product_list%'
+            WHERE product.Product_Name LIKE '%$product_list%' OR genus.Genus LIKE '%$product_list%' OR product.Category LIKE '%$product_list%' 
         ttttt;
     }else{
         $query = <<<ttttt
@@ -85,32 +89,43 @@
         // Checking if category, on sale, or search bar
         if ($isCategory AND $product_category == $categoryType){
             // Setting dynamic variables
+            // product id
+            $product_id = sanitizeMySQL($conn, $row["Product_ID"]);
+
+            // product name
             $product_name = sanitizeMySQL($conn, $row["Product_Name"]);
             $product_name = stripslashes($product_name); //rod's food
 
+            // price
             $price = floatval(sanitizeMySQL($conn, $row["Product_Price"]));
             $discount = floatval(sanitizeMySQL($conn, $row["Discount"]));
             $product_price = $price - $price * $discount;
             $product_price = round($product_price, 2);
             $product_price = sprintf('%0.2f', $product_price); 
 
+            // on sale message
             $onsale = FALSE;
             
             if ($discount != 0){
                 $onsale = TRUE;
             }
 
+            // genus
             $genus = "";
             if ($row["Genus"] != NULL){
                 $genus = "(".sanitizeMySQL($conn, $row["Genus"]).")";
+                $genus = stripslashes($genus);
             }
 
+            // SUB quantity
             $quantity = sanitizeMySQL($conn, $row['Quantity']);
 
+            // image path
             $image_relative_path = createImagePath($product_name, $product_category);
 
             // Recording dynamic variable details
             $product_details = array();
+            $product_details["product_id"] = $product_id;
             $product_details["product_name"] = $product_name;
             $product_details["product_price"] = $product_price;
             $product_details["genus"] = $genus;
@@ -121,37 +136,47 @@
             $displayed_products[] = $product_details;
         } else if ($isOnSale){
             // Setting dynamic variables
+            // product id
+            $product_id = sanitizeMySQL($conn, $row["Product_ID"]);
+
+            // price
             $price = floatval(sanitizeMySQL($conn, $row["Product_Price"]));
             $discount = floatval(sanitizeMySQL($conn, $row["Discount"]));
             $product_price = $price - $price * $discount;
             $product_price = round($product_price, 2);
             $product_price = sprintf('%0.2f', $product_price); 
 
+            // onsale message
             $onsale = FALSE;
             
             if ($discount != 0){
                 $onsale = TRUE;
             }
 
-            // Check condition - if item is not on sale, don't include
+            // Check condition - if item is not on sale, don't include and move to next item
             if (!$onsale){
                 continue;
             }
 
+            // product name
             $product_name = sanitizeMySQL($conn, $row["Product_Name"]);
             $product_name = stripslashes($product_name); //rod's food
 
+            // genus
             $genus = "";
             if ($row["Genus"] != NULL){
                 $genus = "(".sanitizeMySQL($conn, $row["Genus"]).")";
             }
 
+            // quantity
             $quantity = sanitizeMySQL($conn, $row['Quantity']);
 
+            // image path
             $image_relative_path = createImagePath($product_name, $product_category);
 
             // Recording dynamic variable details
             $product_details = array();
+            $product_details["product_id"] = $product_id;
             $product_details["product_name"] = $product_name;
             $product_details["product_price"] = $product_price;
             $product_details["genus"] = $genus;
@@ -162,32 +187,42 @@
             $displayed_products[] = $product_details;
         } else if ($isSearchTerm) {
             // Setting dynamic variables
+            // product id
+            $product_id = sanitizeMySQL($conn, $row["Product_ID"]);
+
+            // product name
             $product_name = sanitizeMySQL($conn, $row["Product_Name"]);
             $product_name = stripslashes($product_name); //rod's food
 
+            // price
             $price = floatval(sanitizeMySQL($conn, $row["Product_Price"]));
             $discount = floatval(sanitizeMySQL($conn, $row["Discount"]));
             $product_price = $price - $price * $discount;
             $product_price = round($product_price, 2);
             $product_price = sprintf('%0.2f', $product_price); 
 
+            // on sale message
             $onsale = FALSE;
             
             if ($discount != 0){
                 $onsale = TRUE;
             }
 
+            // genus
             $genus = "";
             if ($row["Genus"] != NULL){
                 $genus = "(".sanitizeMySQL($conn, $row["Genus"]).")";
             }
 
-            $quantity = sanitizeMySQL($conn, $row['Quantity']); //needs work!!! //need to make sure quantity remains true...
+            // quantity
+            $quantity = sanitizeMySQL($conn, $row['Quantity']);
 
+            // image path
             $image_relative_path = createImagePath($product_name, $product_category);
 
             // Recording dynamic variable details
             $product_details = array();
+            $product_details["product_id"] = $product_id;
             $product_details["product_name"] = $product_name;
             $product_details["product_price"] = $product_price;
             $product_details["genus"] = $genus;
@@ -209,13 +244,35 @@
         $renamed_name = renameCategory($categoryType);
     }
 
-    // Removing duplicated products
+    // Removing duplicated products and updating total quantity
     $displayed_products = removeDuplicates($displayed_products);
+
+    // Checking if quantity needs to be decreased based on cart_items table
+    if (array_key_exists('ID',$_SESSION)){
+        $user_id = $_SESSION['ID'];
+
+        $query = "SELECT * FROM cart_item WHERE ID=$user_id";
+        $result = $conn->query($query);
+        if(!$result) die ($result);
+
+        $numRows = $result->num_rows;
+        for ($i = 0; $i < $numRows; ++$i)
+        {
+            $row = $result->fetch_array(MYSQLI_ASSOC);
+
+            for ($w = 0; $w < count($displayed_products); ++$w){
+                $product_id = $displayed_products[$w]['product_id'];
+
+                if($product_id == $row['Product_ID']){
+                    $displayed_products[$w]['quantity'] -= $row['Quantity'];
+                }
+            }
+        }
+    }
 ?>
 
-<html>
-    
-<head>
+<html> 
+    <head>
         <title>FISH R US</title>
         <meta name="viewport" content="width=device-width, initial-scale=1">
         <style>
@@ -223,7 +280,7 @@
             .top-nav {
                 background-color:#3587b8;
                 overflow: hidden;
-                height:48px; 
+                height:46px; 
             }
 
             .top-nav a {
@@ -299,10 +356,6 @@
             table {
                 width:100%;
                 align:left;
-
-                /*vertical gap between rows*/
-                border-collapse: separate;
-                border-spacing: 0 1em;
             }
 
             td {
@@ -314,32 +367,52 @@
                 text-align: center;
             }
             /* end of table css */
+
+            /* start of paragraph formatting */
+            p.format {
+                margin-top: 0;
+                margin-bottom: 0;
+                margin-left: 1em;
+                margin-right: 1em;
+                padding: 0px 0px 0px 0px;
+            }
+            /* end of paragraph formatting */
         </style>
     </head>
 
     <body>
-        <!-- nav bar -->
+        <!-- nav bar v3 -->
         <header class="top-nav">
             <div>
-                <a href="home.php">FISH R US</a>
+                <a href="home.php"><p class="format">FISH R US</p></a>
             </div>
 
             <div>
                 <form method="GET" action="product-list.php" name="site-search" style="display:inline">
+                    <p class="format">
                     <div> 
                         <input type="text" size="50" name="search_term"> <!-- size of search bar -->
                         <input type="submit" value="Go">
                     </div>
+                    </p>
                 </form>
             </div>
 
             <div class="dropdown">
-                <button class="dropbtn">Account 
+                <button class="dropbtn"><p class="format">Account</p> 
                     <i class="fa fa-caret-down"></i>
                 </button>
                 <div class="dropdown-content">
-                    <a href="login.php">Sign In</a>
-                    <a href="#">Register</a>
+                    <?php
+                        if(array_key_exists('ID',$_SESSION)){
+                        ?>
+                            <a href="#account details page">Account Details</a>
+                            <a href="#order history page">Order History</a>
+                            <a href="logout.php">Log Out</a>
+                    <?php }else{ ?>
+                            <a href="login.php">Sign In</a>
+                            <a href="register page">Register</a>
+                    <?php } ?>
                 </div>
             </div>
 
@@ -348,6 +421,34 @@
                     <img src="img\cart-icon.png" width="20" height="20">
                 </a>
             </div>
+
+            <?php 
+                $query = "SELECT * FROM admin WHERE `ID` = '$_SESSION[ID]'";
+                $result = $conn->query($query);
+                if (!$result) die ("Error: Database access failed, home.php");
+
+                $rows = $result->num_rows;
+
+                if($rows === 1){
+            ?>
+                <div>
+                    <a href="#admin page"><p class="format">Admin</p></a>
+                </div>
+            <?php
+                }
+            ?>
+
+            <?php 
+                if(array_key_exists('ID',$_SESSION)){
+            ?>
+            <p class="format">
+                <a style="background-color:#3587b8;">
+                Hello, <?php echo "$_SESSION[First_Name]"; ?>
+                </a>
+            </p>
+            <?php
+                }
+            ?>
         </header>
 
     <!-- List of Products -->
@@ -359,6 +460,11 @@
         <tr>
             <h3>Results for <?php echo $renamed_name ?></h3>
         </tr>
+
+        <?php
+            // print_r($displayed_products);
+        ?>
+
         <?php foreach($displayed_products as $product){ ?>
             <tr>
             <?php for($k=0;$k<4;$k++){ ?>
@@ -393,6 +499,7 @@
                 </td>
                 
             <?php } ?>
+
             </tr>
 
             <?php
