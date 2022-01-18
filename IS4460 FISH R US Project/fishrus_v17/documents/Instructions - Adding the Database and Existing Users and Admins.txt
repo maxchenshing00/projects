@@ -1,0 +1,20 @@
+Create the Database and Populate the Database:
+1. Run the code from ‘fishrus-v2.sql’ in phpMyAdmin
+2. Run the code from ‘adding_users_and_roles.php’ in Localhost using WAMP
+
+
+Existing Users:
+• Username: abe
+  Password: abe
+• Username: betty
+  Password: betty
+• Username: pjones
+  Password: pass
+• Username: bsmith
+  Password: pass
+
+Existing Admins:
+• Username: charlie
+  Password: charlie
+• Username: donald
+  Password: donald
