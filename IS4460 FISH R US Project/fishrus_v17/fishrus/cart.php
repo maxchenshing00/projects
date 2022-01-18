@@ -1,8 +1,8 @@
 <?php
 require_once "utility/sanitize.php";
 require_once "utility/login-cred.php";
+require_once "User.php";
 
-// Starting connection with database
 $conn = new mysqli($hn, $un, $pw, $db);
 if ($conn->connect_error) die("Error: Failed to connect to database.");
 
@@ -10,149 +10,15 @@ if (!isset($_SESSION)) { session_start(); }
 ?>
 
 <?php
-    // Adding product to cart
-    if(isset($_POST['submitted'])){
-        // If user not logged in
-        if(!array_key_exists('ID',$_SESSION)){
-            header("Location: login.php");
-        } else {
-            //print_r($_POST); Array ([quantity] => 1[product] => Amazon Sword Plant[product_id] => 19[submitted] => submitted )
-            //print_r($_SESSION); Array ([Username] => john123[First_Name] => John[Last_Name] => Smith[ID] => 1 ) 
-            $user_id = $_SESSION['ID'];
-            $product_id = $_POST['product_id'];
-            $quantity = $_POST['quantity'];
-
-            $query = "INSERT INTO cart_item(ID, Product_ID, Quantity) VALUES ('$user_id','$product_id','$quantity')";
-            $result = $conn->query($query);
-            if(!$result) die($result);
-
-            header("Location: cart.php");
-        }
-        
-    }
-
-    ///
-    /// Start of displaying the product code
-    ///
-
-    // Getting the product name from URL
-    if(isset($_GET['product'])){
-        $product = sanitizeString($_GET['product']);
-        $product = addslashes($product); // rod's food to rod\'s food
-    }else{
-        $product = "ERROR";
-    }
-
-    // Setting variables for display in product.php
-    // query for product table
-    $query = "SELECT * FROM product WHERE Product_Name='$product'";
-    $result = $conn->query($query);
-    if (!$result) die ("Database access failed in product.php 1");
-
-    $row = $result->fetch_array(MYSQLI_ASSOC);
-
-    $product_price = sanitizeMySQL($conn, $row['Product_Price']); // product price
-    $product_id = sanitizeMySQL($conn, $row['Product_ID']); // product id
-    $product_category = sanitizeMySQL($conn, $row['Category']); // product category
-
-    // query for inventory table
-    $query = "SELECT * FROM inventory WHERE Product_ID='$product_id'";
-    $result = $conn->query($query);
-    if (!$result) die ("Database access failed in product.php 2");
-
-    $rows = $result->num_rows;
-
-    $quantity = 0; // total quantity
-    $stock_message = "IN STOCK"; // "in stock" message
-
-    for ($i = 0; $i < $rows; ++$i)
-    {
-        $row = $result->fetch_array(MYSQLI_ASSOC);
-
-        $sub_quantity = sanitizeMySQL($conn, $row['Quantity']);
-        $quantity += $sub_quantity;
-    }
-
-    if($quantity == 0){
-        $stock_message = "OUT OF STOCK";
-    }
-
-    // query for discount table
-    $query = "SELECT * FROM discount WHERE Product_ID='$product_id'";
-    $result = $conn->query($query);
-    if (!$result) die ("Database access failed in product.php 3");
-
-    $rows = $result->num_rows;
-
-    $discount_message = ""; // discount message
-    
-    if ($rows != 0){
-        $discount_message = "ON SALE!";
-
-        $row = $result->fetch_array(MYSQLI_ASSOC);
-
-        $discount = sanitizeMySQL($conn, $row['Discount']);
-
-        $product_price = $product_price - ($product_price * $discount);
-
-        $product_price = round($product_price, 2);
-        $product_price = sprintf('%0.2f', $product_price); // product price
-    }
-
-    // query for genus table
-    $query = "SELECT * FROM genus WHERE Product_ID='$product_id'";
-    $result = $conn->query($query);
-    if (!$result) die ("Database access failed in product.php 4");
-
-    $rows = $result->num_rows;
-
-    $genus = ""; //genus
-    
-    if ($rows != 0){
-        $row = $result->fetch_array(MYSQLI_ASSOC);
-
-        $genus = sanitizeMySQL($conn, $row['Genus']);
-        $genus = stripslashes($genus);
-        $genus = '('.$genus.')';
-    }
-
-    $image_relative_path = createImagePath($product, $product_category); // image relative path
-
-    $product = stripslashes($product); //rod\'s food back to rod's food
-
-    ///
-    /// End of displaying the product code
-    ///
-
-    // Checking if quantity needs to be decreased based on cart_items table
-    if (array_key_exists('ID',$_SESSION)){
-        $user_id = $_SESSION['ID'];
-
-        $query = "SELECT * FROM cart_item WHERE ID=$user_id";
-        $result = $conn->query($query);
-        if(!$result) die ($result);
-
-        $minus_from_quantity = 0;
-
-        $numRows = $result->num_rows;
-        for ($i = 0; $i < $numRows; ++$i)
-        {
-            $row = $result->fetch_array(MYSQLI_ASSOC);
-
-            if($product_id == $row['Product_ID']){
-                $minus_from_quantity += $row['Quantity'];
-            }
-        }
-
-        $quantity -= $minus_from_quantity;
-
-        if ($quantity == 0){
-            $stock_message = "OUT OF STOCK";
-        }
-    }
-
+// User must be logged in to access cart page
+$user_id = "";
+if (!array_key_exists('user',$_SESSION)){
+    header("Location: login.php");
+} else {
+    $user = $_SESSION['user'];
+    $user_id = $user->id;
+}
 ?>
-
 
 <html> 
     <head>
@@ -264,7 +130,7 @@ if (!isset($_SESSION)) { session_start(); }
     </head>
 
     <body>
-        <!-- nav bar v3 -->
+        <!-- nav bar v8 -->
         <header class="top-nav">
             <div>
                 <a href="home.php"><p class="format">FISH R US</p></a>
@@ -287,14 +153,14 @@ if (!isset($_SESSION)) { session_start(); }
                 </button>
                 <div class="dropdown-content">
                     <?php
-                        if(array_key_exists('ID',$_SESSION)){
+                        if(array_key_exists('user',$_SESSION)){
                         ?>
-                            <a href="#account details page">Account Details</a>
-                            <a href="#order history page">Order History</a>
+                            <a href="accountdetails.php">Profile</a>
+                            <a href="orderhistory.php">Transactions</a>
                             <a href="logout.php">Log Out</a>
                     <?php }else{ ?>
                             <a href="login.php">Sign In</a>
-                            <a href="register page">Register</a>
+                            <a href="register.php">Register</a>
                     <?php } ?>
                 </div>
             </div>
@@ -306,85 +172,155 @@ if (!isset($_SESSION)) { session_start(); }
             </div>
 
             <?php 
-                $query = "SELECT * FROM admin WHERE `ID` = '$_SESSION[ID]'";
+                $user = $_SESSION['user'];
+
+                $query = "SELECT * FROM `role` WHERE `Username` = '$user->username'";
                 $result = $conn->query($query);
                 if (!$result) die ("Error: Database access failed, home.php");
 
                 $rows = $result->num_rows;
 
-                if($rows === 1){
+                if($rows >= 1){
             ?>
                 <div>
-                    <a href="#admin page"><p class="format">Admin</p></a>
+                    <a href="admin.php"><p class="format">Admin</p></a>
                 </div>
             <?php
                 }
             ?>
 
             <?php 
-                if(array_key_exists('ID',$_SESSION)){
+                if(array_key_exists('user',$_SESSION)){
             ?>
             <p class="format">
                 <a style="background-color:#3587b8;">
-                Hello, <?php echo "$_SESSION[First_Name]"; ?>
+                Hello, <?php echo "$user->first_name"; ?>
                 </a>
             </p>
             <?php
                 }
             ?>
         </header>
-<?php
-echo <<<_END
+    
         <!-- product info -->
-        <table style="width:50%;margin-left:auto;margin-right:auto">
+        <table>
         <tr>
-            <h3>$product</h3>
+            <h1>Shopping Cart</h1>
         </tr>
+
+        <?php
+        //// 1. Query cart_item table
+        $query = <<<ttttt
+        SELECT cart_item.Cart_Item_ID, cart_item.ID, cart_item.Product_ID, cart_item.Quantity, product.Product_Name, product.Product_Price,
+        product.Category, product.Vendor_ID, genus.Genus, discount.Discount
+        FROM cart_item 
+        LEFT JOIN product ON product.Product_ID = cart_item.Product_ID 
+        LEFT JOIN genus ON genus.Product_ID = product.Product_ID 
+        LEFT JOIN discount ON discount.Product_ID = product.Product_ID 
+        WHERE cart_item.ID = '$user_id';
+        ttttt;
+        $result = $conn->query($query);
+        if(!$result) die ($result);
+
+        //// 2. Iterate through query rows and display cart items
+        $numRows = $result->num_rows;
+
+        // User cannot go to checkout with 0 cart items
+        $disabled_text = "";
+        if($numRows == 0){
+            $disabled_text = "disabled";
+        }
+
+        for($j=0; $j<$numRows; ++$j){
+            $row = $result->fetch_array(MYSQLI_ASSOC);
+
+            // product id
+            $product_id = sanitizeMySQL($conn, $row["Product_ID"]);
+
+            // product name
+            $product_name = sanitizeMySQL($conn, $row["Product_Name"]);
+            $product_name = stripslashes($product_name); //rod's food
+
+            // genus
+            $genus = "";
+            if ($row["Genus"] != NULL){
+                $genus = "(".sanitizeMySQL($conn, $row["Genus"]).")";
+                $genus = stripslashes($genus);
+            }
+
+            // price (with discount accounted for)
+            $price = floatval(sanitizeMySQL($conn, $row["Product_Price"]));
+            $discount = floatval(sanitizeMySQL($conn, $row["Discount"]));
+            $product_price = $price - $price * $discount;
+            $product_price = round($product_price, 2);
+            $product_price = sprintf('%0.2f', $product_price); 
+
+            // on sale message
+            $onsale = "";
+            
+            if ($discount != 0){
+                $onsale = "ON SALE!";
+            }
+
+            // quantity (that the customer wants to buy)
+            $quantity = $row['Quantity'];
+
+            // image url 
+            $image_relative_path = createImagePath($product_name, $row['Category']);
+
+            echo <<<_END
+            <tr>
+                <td>
+                    <img src=$image_relative_path height="200" width="200"/>
+                </td>
+                <td style="text-align:left;">
+                    <span style="background-color:yellow;font-style:bold">$onsale</span><br>
+                    $product_name<br>
+                    $genus<br><br>
+                    Starting at <span style="font-style:bold">$$product_price</span><br>
+                    Quantity: $quantity
+                    <br><br><br>
+                    <form method="POST" action="delete-cart-item.php" style="display:inline">
+                        <div> 
+                            <input type="hidden" name="deleted" value="yes">
+                            <input type="hidden" name="product_id" value="$product_id">
+                            <input type="submit" value="Remove from cart">
+                        </div>
+                    </form>
+                </td>
+            </tr>
+_END;
+        } 
+        ?>
+        
+        <tr></tr>
         <tr>
             <td>
-                <img src="$image_relative_path" height="250" width="250"/>
             </td>
             <td style="text-align:left;">
-                <span style="background-color:yellow;font-style:bold">$discount_message<br><br></span>
-                <br>
-                $product<br>
-                $genus<br><br>
-                Starting at <span style="font-style:bold">$$product_price</span><br>
-                <span style="font-style:italic">$stock_message</span>
-                <br><br>
-                <form method="POST" action="product.php" name="add-to-cart" style="display:inline">
-                    Quantity 
-                    <select name="quantity" size="1">
-_END;
-                        for ($i = 1; $i < ($quantity + 1); ++$i){
-                            echo <<<_END
-                                <option value="$i">$i</option>
-_END;
-                        }
-echo <<<_END
-                    </select>
-                    <br><br><br>
+                <br><br><br>
+                <form method="GET" action="checkout.php" style="display:inline">
                     <div> 
-                        <input type="submit" value="Add to Cart">
-                    </div>
-                    <div> 
-                        <input type="hidden" name="product" value="$product">
-                        <input type="hidden" name="product_id" value="$product_id">
-                        <input type="hidden" name="submitted" value="submitted">
+                        <input type="submit" value="Proceed to Checkout" <?php echo "$disabled_text" ?>>
                     </div>
                 </form>
             </td>
         </tr>
         </table>
-            
-        </body>
-    </html>
-_END;
+    </body>
+</html>
 
-
+<?php
+/**
+ * Create the relative path for a product image.
+ * 
+ * @param string $product_name      The product name
+ * @param string $product_category  The category the product belongs in
+ * 
+ * @return string the relative path for the product image
+ */
 function createImagePath($product_name, $product_category){
     $image_relative_path = 'product-images\\'; //image relative path
-    $product_name = stripslashes($product_name); //rod\'s food to rod's food
     $image_name = str_replace(' ', '-', $product_name);
 
     if($product_category == "Fish")
@@ -430,8 +366,4 @@ function createImagePath($product_name, $product_category){
 
     return $image_relative_path;
 }
-
 ?>
-
-
-

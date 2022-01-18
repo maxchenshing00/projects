@@ -19,7 +19,6 @@
                 width: 95%;
                 margin:20px auto;
             }
-
         </style>
     </head>
 
@@ -55,17 +54,14 @@
         </table>
         </form>
 
-        <!-- <br><br>
-        <form action="home.php" method="post">
-            <table class="center">
-                <tr>
-                    <td style="text-align:center"><body>New?</body></td>
-                </tr>
-                <tr>
-                    <td style="text-align:center"><input type="submit" value="Register"></td>
-                </tr>
-            </table>
-        </form> -->
-
+        <br><br>
+        <table class="center">
+            <tr>
+                <td style="text-align:center"><body>New?</body></td>
+            </tr>
+            <tr>
+                <td style="text-align:center"><a href="register.php">Register</a></td>
+            </tr>
+        </table>
     </body> 
 </html>

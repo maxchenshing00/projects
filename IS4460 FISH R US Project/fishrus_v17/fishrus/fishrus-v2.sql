@@ -1,3 +1,4 @@
+-- The SQL code used to autogenerate ERD in MySQL Workbench
 -- Creating the database and using it.
 DROP DATABASE IF EXISTS FishRUs;
 CREATE DATABASE FishRUs;
@@ -44,6 +45,7 @@ CREATE TABLE `employee` (
   CONSTRAINT `fk_employee_StoreID` FOREIGN KEY (`Store_ID`) REFERENCES `store` (`Store_ID`) ON DELETE NO ACTION ON UPDATE CASCADE
 );
 
+-- orders table changed below
 CREATE TABLE `orders` (
   `Order_ID` int(11) NOT NULL AUTO_INCREMENT,
   `Order_Date` date NOT NULL,
@@ -81,7 +83,7 @@ CREATE TABLE `orderline` (
 );
 
 CREATE TABLE `inventory` (
-  `Inventory_ID` int(11) NOT NULL,
+  `Inventory_ID` int(11) NOT NULL AUTO_INCREMENT,
   `Product_ID` int(11) NOT NULL,
   `Vendor_ID` int(11) NOT NULL,
   `Store_ID` int(11) NOT NULL,
@@ -96,16 +98,16 @@ CREATE TABLE `inventory` (
   CONSTRAINT `fk_inventory_StoreID` FOREIGN KEY (`Store_ID`) REFERENCES `store` (`Store_ID`) ON DELETE NO ACTION ON UPDATE CASCADE
 );
 
--- A trigger which calculates the Total_Price in the orders table.
-DELIMITER $$
-CREATE TRIGGER PaymentTotalCalculate AFTER INSERT ON orderline
-	FOR EACH ROW
-    BEGIN
-		UPDATE orders
-        SET orders.Total_Price = orders.Total_Price + NEW.Quantity * (SELECT product.Product_Price FROM product WHERE product.Product_ID = NEW.Product_ID) 
-        WHERE orders.Order_ID = NEW.Order_ID;
-    END $$
-DELIMITER ;
+-- -- A trigger which calculates the Total_Price in the orders table.
+-- DELIMITER $$
+-- CREATE TRIGGER PaymentTotalCalculate AFTER INSERT ON orderline
+-- 	FOR EACH ROW
+--     BEGIN
+-- 		UPDATE orders
+--         SET orders.Total_Price = orders.Total_Price + NEW.Quantity * (SELECT product.Product_Price FROM product WHERE product.Product_ID = NEW.Product_ID) 
+--         WHERE orders.Order_ID = NEW.Order_ID;
+--     END $$
+-- DELIMITER ;
 
 
 -- Inserting the data into the tables.
@@ -120,8 +122,8 @@ INSERT INTO `FishRUS`.`vendor` (`Vendor_ID`, `Vendor_Name`, `Phone_Number`) VALU
 INSERT INTO `FishRUS`.`vendor` (`Vendor_ID`, `Vendor_Name`, `Phone_Number`) VALUES ('2', 'Aquaria Supplies', '222-222-2222');
 
 -- Employee table
-INSERT INTO `FishRUS`.`employee` (`Emp_ID`, `First_Name`, `Last_Name`, `Position`, `Email`, `Admin`, `Store_ID`) VALUES ('1', 'Adam', 'Jones', 'Manager', 'adam.jones123@gmail.com', 'True', '1');
-INSERT INTO `FishRUS`.`employee` (`Emp_ID`, `First_Name`, `Last_Name`, `Position`, `Email`, `Admin`, `Store_ID`) VALUES ('2', 'Bianca', 'Brown', 'Sales', 'biancebrown95@gmail.com', 'True', '1');
+INSERT INTO `FishRUS`.`employee` (`Emp_ID`, `First_Name`, `Last_Name`, `Position`, `Email`, `Admin`, `Store_ID`) VALUES ('1', 'Adam', 'Jones', 'Manager', 'adam.jones123@gmail.com', True, '1');
+INSERT INTO `FishRUS`.`employee` (`Emp_ID`, `First_Name`, `Last_Name`, `Position`, `Email`, `Admin`, `Store_ID`) VALUES ('2', 'Bianca', 'Brown', 'Sales', 'biancebrown95@gmail.com', True, '1');
 
 -- Orders table
 INSERT INTO `FishRUS`.`orders` (`Order_ID`, `Order_Date`, `Customer_ID`, `Emp_ID`, `Store_ID`, `Total_Price`) VALUES ('1', '2021-09-01', '1', '2', '1', '0');
@@ -272,7 +274,7 @@ CREATE TABLE `user` (
   `Street` varchar(45) DEFAULT NULL,
   `ZIP` char(5) DEFAULT NULL,
   `Username` varchar(45) NOT NULL,
-  `Password` varchar(45) NOT NULL,
+  `Password` varchar(150) NOT NULL,
   PRIMARY KEY (`ID`)
 );
 
@@ -286,6 +288,8 @@ CREATE TABLE `admin` (
   CONSTRAINT `fk_admin_StoreID` FOREIGN KEY (`Store_ID`) REFERENCES `store` (`Store_ID`) ON DELETE NO ACTION ON UPDATE CASCADE
 );
 
+DROP TABLE orderline; -- added to MySQL
+DROP TABLE orders; -- added to MySQL
 DROP TABLE customer;
 DROP TABLE employee;
 
@@ -308,3 +312,54 @@ CREATE TABLE `cart_item` (
   CONSTRAINT `fk_cartitem_ID` FOREIGN KEY (`ID`) REFERENCES `user` (`ID`) ON DELETE NO ACTION ON UPDATE CASCADE,
   CONSTRAINT `fk_cartitem_ProductID` FOREIGN KEY (`Product_ID`) REFERENCES `product` (`Product_ID`) ON DELETE NO ACTION ON UPDATE CASCADE
 );
+
+-- For checkout.php
+-- Creating credit_card table, dropping and recreating order table
+CREATE TABLE `credit_card` (
+  `ID` int(11) NOT NULL,
+  `Card_Number` varchar(100) NOT NULL, -- 16 digits, but hashed
+  `Card_Type` varchar(45) NOT NULL, -- Visa, MasterCard, American Express
+  `Expiration` DATETIME NOT NULL, -- INSERT INTO credit_card (Expiration) Values (Convert(DateTime,'20250626',112))
+  `Security_Code` varchar(70) NOT NULL, -- 3 or 4 digits, but hashed
+  PRIMARY KEY (`Card_Number`),
+  KEY `fk_creditcard_ID_idx` (`ID`),
+  CONSTRAINT `fk_creditcard_ID` FOREIGN KEY (`ID`) REFERENCES `user` (`ID`) ON DELETE NO ACTION ON UPDATE CASCADE
+);
+
+-- DROP TABLE `orders`;
+
+CREATE TABLE `orders` (
+  `Order_ID` int(11) NOT NULL AUTO_INCREMENT,
+  `Order_Date` date NOT NULL,
+  `Customer_ID` int(11) NOT NULL,
+  `Credit_Card_Num` varchar(100) NOT NULL,
+  `Credit_Card_End` varchar(10) NOT NULL,
+  `Card_Type` varchar(45) NOT NULL,
+  `Total_Price` decimal(7,2) DEFAULT 0,
+  PRIMARY KEY (`Order_ID`),
+  KEY `fk_order_CustomerID_idx` (`Customer_ID`),
+  -- KEY `fk_order_CreditCardNum_idx` (`Credit_Card_Num`),
+  CONSTRAINT `fk_order_CustomerID` FOREIGN KEY (`Customer_ID`) REFERENCES `user` (`ID`) ON DELETE NO ACTION ON UPDATE CASCADE
+  -- CONSTRAINT `fk_order_CreditCardNum` FOREIGN KEY (`Credit_Card_Num`) REFERENCES `credit_card` (`Card_Number`) ON DELETE NO ACTION ON UPDATE CASCADE
+);
+
+-- added to MySQL
+CREATE TABLE `orderline` (
+  `Order_ID` int(11) NOT NULL,
+  `Product_ID` int(11) NOT NULL,
+  `Quantity` int(11) NOT NULL,
+  PRIMARY KEY (`Order_ID`,`Product_ID`),
+  CONSTRAINT `fk_orderline_FoodID` FOREIGN KEY (`Product_ID`) REFERENCES `product` (`Product_ID`) ON DELETE NO ACTION ON UPDATE CASCADE,
+  CONSTRAINT `fk_orderline_OrderID` FOREIGN KEY (`Order_ID`) REFERENCES `orders` (`Order_ID`) ON DELETE NO ACTION ON UPDATE CASCADE
+);
+
+-- A trigger which calculates the Total_Price in the orders table.
+DELIMITER $$
+CREATE TRIGGER PaymentTotalCalculate AFTER INSERT ON orderline
+	FOR EACH ROW
+    BEGIN
+		UPDATE orders
+        SET orders.Total_Price = orders.Total_Price + NEW.Quantity * (SELECT product.Product_Price FROM product WHERE product.Product_ID = NEW.Product_ID) 
+        WHERE orders.Order_ID = NEW.Order_ID;
+    END $$
+DELIMITER ;

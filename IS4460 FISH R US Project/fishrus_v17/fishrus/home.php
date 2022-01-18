@@ -1,6 +1,7 @@
 <?php
 require_once "utility/sanitize.php";
 require_once "utility/login-cred.php";
+require_once "User.php";
 
 $conn = new mysqli($hn, $un, $pw, $db);
 if ($conn->connect_error) die("Error: Failed to connect to database.");
@@ -118,7 +119,7 @@ if (!isset($_SESSION)) { session_start(); }
     </head>
 
     <body>
-        <!-- nav bar v3 -->
+        <!-- nav bar v8 -->
         <header class="top-nav">
             <div>
                 <a href="home.php"><p class="format">FISH R US</p></a>
@@ -141,14 +142,14 @@ if (!isset($_SESSION)) { session_start(); }
                 </button>
                 <div class="dropdown-content">
                     <?php
-                        if(array_key_exists('ID',$_SESSION)){
+                        if(array_key_exists('user',$_SESSION)){
                         ?>
-                            <a href="#account details page">Account Details</a>
-                            <a href="#order history page">Order History</a>
+                            <a href="accountdetails.php">Profile</a>
+                            <a href="orderhistory.php">Transactions</a>
                             <a href="logout.php">Log Out</a>
                     <?php }else{ ?>
                             <a href="login.php">Sign In</a>
-                            <a href="register page">Register</a>
+                            <a href="register.php">Register</a>
                     <?php } ?>
                 </div>
             </div>
@@ -160,27 +161,29 @@ if (!isset($_SESSION)) { session_start(); }
             </div>
 
             <?php 
-                $query = "SELECT * FROM admin WHERE `ID` = '$_SESSION[ID]'";
+                $user = $_SESSION['user'];
+
+                $query = "SELECT * FROM `role` WHERE `Username` = '$user->username'";
                 $result = $conn->query($query);
                 if (!$result) die ("Error: Database access failed, home.php");
 
                 $rows = $result->num_rows;
 
-                if($rows === 1){
+                if($rows >= 1){
             ?>
                 <div>
-                    <a href="#admin page"><p class="format">Admin</p></a>
+                    <a href="admin.php"><p class="format">Admin</p></a>
                 </div>
             <?php
                 }
             ?>
 
             <?php 
-                if(array_key_exists('ID',$_SESSION)){
+                if(array_key_exists('user',$_SESSION)){
             ?>
             <p class="format">
                 <a style="background-color:#3587b8;">
-                Hello, <?php echo "$_SESSION[First_Name]"; ?>
+                Hello, <?php echo "$user->first_name"; ?>
                 </a>
             </p>
             <?php
@@ -288,14 +291,6 @@ if (!isset($_SESSION)) { session_start(); }
             </td>
         </tr>
     </table>
-
   </body>
 </html>
 
-<?php 
-// }
-// else{
-//     header("Location: login.php");
-//     exit();
-// } 
-?>
